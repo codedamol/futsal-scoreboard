@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBS Rangsit Fut-Sal Robotics Competition — Scoreboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch-dark:#0B2E23;
+    --pitch-mid:#123527;
+    --pitch-stripe:#0E301F;
+    --line-white:#F4F1E8;
+    --line-white-dim:#CBD3C6;
+    --gold:#E8B84B;
+    --gold-dim:#8A6E2F;
+    --ice:#5FA8C9;
+    --ice-dim:#355C6B;
+    --alert:#D64545;
+    --panel:#0F241B;
+    --panel-line:rgba(244,241,232,0.12);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      repeating-linear-gradient(
+        100deg,
+        var(--pitch-dark) 0px, var(--pitch-dark) 90px,
+        var(--pitch-stripe) 90px, var(--pitch-stripe) 180px
+      );
+    color:var(--line-white);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px 60px;
+  }
+
+  header.top{
+    width:100%;
+    max-width:1000px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:10px 4px 18px;
+    border-bottom:2px solid var(--panel-line);
+    margin-bottom:22px;
+  }
+  header.top .brand{
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:1.5px;
+    font-size:clamp(22px,4vw,34px);
+    color:var(--gold);
+  }
+  header.top .brand span{color:var(--line-white-dim);font-size:0.55em;letter-spacing:2px;display:block;font-family:'Inter',sans-serif;font-weight:600;margin-top:2px;}
+  header.top .date{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    color:var(--line-white-dim);
+    text-align:right;
+  }
+
+  nav.tabs{
+    display:flex;
+    gap:8px;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:999px;
+    padding:5px;
+    margin-bottom:28px;
+  }
+  nav.tabs button{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    background:transparent;
+    border:none;
+    color:var(--line-white-dim);
+    padding:10px 22px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .18s ease, color .18s ease;
+  }
+  nav.tabs button.active{
+    background:var(--gold);
+    color:var(--pitch-dark);
+  }
+  nav.tabs button:not(.active):hover{color:var(--line-white);}
+
+  .view{width:100%;max-width:1000px;display:none;}
+  .view.active{display:block;}
+
+  /* ---------- LIVE MATCH ---------- */
+  .court-divider{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    margin:6px 0 26px;
+  }
+  .court-divider .line{flex:1;height:2px;background:var(--panel-line);}
+  .court-divider .circle{width:16px;height:16px;border-radius:50%;border:2px solid var(--panel-line);}
+
+  .match-setup{
+    display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap;
+    margin-bottom:24px;
+  }
+  .match-setup select, .match-setup input[type=number]{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    color:var(--line-white);
+    padding:9px 14px;
+    border-radius:8px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+  }
+  .match-setup label{font-size:12px;color:var(--line-white-dim);text-transform:uppercase;letter-spacing:0.5px;margin-right:6px;}
+
+  .scoreboard{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:18px;
+    align-items:stretch;
+    margin-bottom:26px;
+  }
+  .team-panel{
+    background:var(--panel);
+    border-radius:var(--radius);
+    border:1px solid var(--panel-line);
+    padding:22px 18px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .team-panel.home{border-top:4px solid var(--gold);}
+  .team-panel.away{border-top:4px solid var(--ice);}
+  .team-panel input.team-name{
+    width:100%;
+    background:transparent;
+    border:none;
+    color:var(--line-white);
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:1px;
+    font-size:clamp(20px,3.5vw,28px);
+    text-align:center;
+    margin-bottom:10px;
+  }
+  .team-panel input.team-name:focus{outline:none;color:var(--gold);}
+  .team-panel.away input.team-name:focus{color:var(--ice);}
+  .score-num{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(64px,12vw,110px);
+    line-height:1;
+    letter-spacing:2px;
+    color:var(--line-white);
+    margin:6px 0 14px;
+    font-variant-numeric:tabular-nums;
+  }
+  .score-btns{display:flex;gap:10px;justify-content:center;}
+  .score-btns button{
+    width:48px;height:48px;border-radius:50%;
+    border:1px solid var(--panel-line);
+    background:var(--pitch-dark);
+    color:var(--line-white);
+    font-size:20px;font-weight:700;
+    cursor:pointer;
+    transition:transform .1s ease, background .15s ease;
+  }
+  .team-panel.home .score-btns button.plus{background:var(--gold);color:var(--pitch-dark);border-color:var(--gold);}
+  .team-panel.away .score-btns button.plus{background:var(--ice);color:var(--pitch-dark);border-color:var(--ice);}
+  .score-btns button:active{transform:scale(0.92);}
+
+  .center-clock{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;
+    padding:10px 6px;
+  }
+  .half-badge{
+    font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;
+    text-transform:uppercase;color:var(--pitch-dark);background:var(--line-white-dim);
+    padding:4px 12px;border-radius:999px;
+  }
+  .clock{
+    font-family:'JetBrains Mono',monospace;
+    font-size:clamp(38px,7vw,58px);
+    font-weight:700;
+    color:var(--gold);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:1px;
+  }
+  .clock.warn{color:var(--alert);}
+  .clock-controls{display:flex;gap:8px;}
+  .clock-controls button{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    color:var(--line-white);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:13px;font-weight:600;
+    cursor:pointer;
+  }
+  .clock-controls button.primary{background:var(--gold);color:var(--pitch-dark);border-color:var(--gold);}
+  .clock-controls button.danger{background:var(--alert);color:var(--line-white);border-color:var(--alert);}
+  .duration-set{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--line-white-dim);}
+  .duration-set input{width:52px;text-align:center;background:var(--pitch-dark);border:1px solid var(--panel-line);color:var(--line-white);border-radius:6px;padding:5px;}
+
+  .save-row{display:flex;justify-content:center;margin-top:6px;}
+  .save-row button{
+    background:transparent;
+    border:2px solid var(--gold);
+    color:var(--gold);
+    font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+    letter-spacing:0.5px;text-transform:uppercase;
+    padding:12px 28px;border-radius:8px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .save-row button:hover{background:var(--gold);color:var(--pitch-dark);}
+  .save-row button:disabled{opacity:0.35;cursor:not-allowed;background:transparent;color:var(--line-white-dim);border-color:var(--panel-line);}
+
+  .hint{text-align:center;font-size:12px;color:var(--line-white-dim);margin-top:10px;}
+
+  /* ---------- STANDINGS ---------- */
+  .add-team-row{
+    display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;align-items:center;
+  }
+  .add-team-row input[type=text]{
+    background:var(--panel);border:1px solid var(--panel-line);color:var(--line-white);
+    padding:10px 14px;border-radius:8px;font-size:14px;min-width:200px;
+  }
+  .add-team-row button{
+    background:var(--gold);color:var(--pitch-dark);border:none;
+    padding:10px 20px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .add-team-row button:disabled{opacity:0.4;cursor:not-allowed;}
+  .team-count{font-size:12px;color:var(--line-white-dim);text-align:center;margin-bottom:16px;}
+
+  table.standings{
+    width:100%;border-collapse:collapse;
+    background:var(--panel);border-radius:var(--radius);overflow:hidden;
+    border:1px solid var(--panel-line);
+  }
+  table.standings thead th{
+    font-family:'Inter',sans-serif;font-size:11px;letter-spacing:0.8px;text-transform:uppercase;
+    color:var(--line-white-dim);text-align:center;padding:14px 8px;border-bottom:1px solid var(--panel-line);
+  }
+  table.standings thead th:first-child, table.standings tbody td:first-child{text-align:left;padding-left:18px;}
+  table.standings tbody td{
+    font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;
+    padding:12px 8px;border-bottom:1px solid rgba(244,241,232,0.06);
+  }
+  table.standings tbody td.team-cell{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;}
+  table.standings tbody tr:last-child td{border-bottom:none;}
+  table.standings tbody tr:nth-child(1) .rank{color:var(--gold);font-weight:800;}
+  td.rank{font-family:'Bebas Neue',sans-serif;font-size:18px;}
+  td.pts{color:var(--gold);font-weight:700;}
+  .remove-btn{
+    background:transparent;border:1px solid var(--alert);color:var(--alert);
+    width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1;
+  }
+  .empty-state{text-align:center;color:var(--line-white-dim);padding:40px 20px;font-size:14px;}
+
+  footer{
+    margin-top:34px;font-size:11px;color:var(--line-white-dim);text-align:center;
+    letter-spacing:0.4px;
+  }
+
+  @media (max-width:640px){
+    .scoreboard{grid-template-columns:1fr;}
+    .center-clock{order:-1;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">FUT-SAL ROBOTICS<span>SBS Rangsit International School — Sept 5</span></div>
+  <div class="date" id="liveClockTime"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-view="live">Live Match</button>
+  <button class="tab-btn" data-view="standings">Standings</button>
+</nav>
+
+<!-- LIVE MATCH VIEW -->
+<section class="view active" id="view-live">
+
+  <div class="match-setup">
+    <div>
+      <label>Home</label>
+      <select id="selectA"></select>
+    </div>
+    <div>
+      <label>Away</label>
+      <select id="selectB"></select>
+    </div>
+    <div class="duration-set">
+      <label style="margin:0;">Match length</label>
+      <input type="number" id="durationMin" min="1" max="30" value="3"> min
+      <button id="applyDuration" style="background:var(--panel);border:1px solid var(--panel-line);color:var(--line-white);padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;">Set</button>
+    </div>
+  </div>
+
+  <div class="court-divider"><div class="line"></div><div class="circle"></div><div class="line"></div></div>
+
+  <div class="scoreboard">
+    <div class="team-panel home">
+      <input class="team-name" id="nameA" maxlength="20" placeholder="Home Team">
+      <div class="score-num" id="scoreA">0</div>
+      <div class="score-btns">
+        <button class="minus" data-team="A" data-delta="-1">−</button>
+        <button class="plus" data-team="A" data-delta="1">+</button>
+      </div>
+    </div>
+
+    <div class="center-clock">
+      <div class="half-badge" id="halfBadge">Half 1</div>
+      <div class="clock" id="clockDisplay">03:00</div>
+      <div class="clock-controls">
+        <button class="primary" id="startPauseBtn">Start</button>
+        <button id="resetClockBtn">Reset</button>
+        <button id="halfBtn">Next Half</button>
+      </div>
+    </div>
+
+    <div class="team-panel away">
+      <input class="team-name" id="nameB" maxlength="20" placeholder="Away Team">
+      <div class="score-num" id="scoreB">0</div>
+      <div class="score-btns">
+        <button class="minus" data-team="B" data-delta="-1">−</button>
+        <button class="plus" data-team="B" data-delta="1">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-row">
+    <button id="saveMatchBtn" disabled>Save Result to Standings</button>
+  </div>
+  <div class="hint">Pumili muna ng dalawang magkaibang teams sa taas (Home &amp; Away) bago ma-save ang score.</div>
+</section>
+
+<!-- STANDINGS VIEW -->
+<section class="view" id="view-standings">
+  <div class="add-team-row">
+    <input type="text" id="newTeamName" placeholder="Team name (e.g. Team Voltron)" maxlength="24">
+    <button id="addTeamBtn">Add Team</button>
+  </div>
+  <div class="team-count" id="teamCount"></div>
+
+  <table class="standings">
+    <thead>
+      <tr>
+        <th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="standingsBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none;">Wala pang team. Mag-add sa taas para magsimula (4–8 teams recommended).</div>
+</section>
+
+<footer>Robotics &amp; STEM Technology · VEX IQ Fut-Sal Robotics Competition · Data saved locally sa browser na ito</footer>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'sbs-futsal-scoreboard-v1';
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){ console.warn('Could not load saved state', e); }
+    return {
+      teams: [],
+      live: {
+        teamAId: null, teamBId: null,
+        nameA: 'Home Team', nameB: 'Away Team',
+        scoreA: 0, scoreB: 0,
+        durationSec: 180, remainingSec: 180,
+        running: false, half: 1
+      }
+    };
+  }
+
+  let state = loadState();
+  if(!state.live) state.live = { teamAId:null, teamBId:null, nameA:'Home Team', nameB:'Away Team', scoreA:0, scoreB:0, durationSec:180, remainingSec:180, running:false, half:1 };
+
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.warn('Could not save state', e); }
+  }
+
+  function uid(){ return 't' + Math.random().toString(36).slice(2,9); }
+
+  // ---------- TABS ----------
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if(btn.dataset.view === 'standings') renderStandings();
+    });
+  });
+
+  // ---------- TOP-RIGHT DATE/TIME ----------
+  function tickHeaderClock(){
+    const el = document.getElementById('liveClockTime');
+    const now = new Date();
+    el.textContent = now.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}) + ' · ' + now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  }
+  tickHeaderClock();
+  setInterval(tickHeaderClock, 15000);
+
+  // ---------- TEAM SELECTS ----------
+  const selectA = document.getElementById('selectA');
+  const selectB = document.getElementById('selectB');
+  const nameA = document.getElementById('nameA');
+  const nameB = document.getElementById('nameB');
+  const saveMatchBtn = document.getElementById('saveMatchBtn');
+
+  function populateSelects(){
+    [selectA, selectB].forEach(sel=>{
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— Free text —</option>' +
+        state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+      if(state.teams.some(t=>t.id===current)) sel.value = current;
+    });
+    selectA.value = state.live.teamAId || '';
+    selectB.value = state.live.teamBId || '';
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+  selectA.addEventListener('change', ()=>{
+    state.live.teamAId = selectA.value || null;
+    const t = state.teams.find(x=>x.id===selectA.value);
+    if(t){ state.live.nameA = t.name; nameA.value = t.name; }
+    validateSaveBtn(); saveState();
+  });
+  selectB.addEventListener('change', ()=>{
+    state.live.teamBId = selectB.value || null;
+    const t = state.teams.find(x=>x.id===selectB.value);
+    if(t){ state.live.nameB = t.name; nameB.value = t.name; }
+    validateSaveBtn(); saveState();
+  });
+
+  nameA.addEventListener('input', ()=>{ state.live.nameA = nameA.value || 'Home Team'; saveState(); });
+  nameB.addEventListener('input', ()=>{ state.live.nameB = nameB.value || 'Away Team'; saveState(); });
+
+  function validateSaveBtn(){
+    const bothSelected = state.live.teamAId && state.live.teamBId && state.live.teamAId !== state.live.teamBId;
+    saveMatchBtn.disabled = !bothSelected;
+  }
+
+  // ---------- SCORES ----------
+  const scoreAEl = document.getElementById('scoreA');
+  const scoreBEl = document.getElementById('scoreB');
+
+  function renderScores(){
+    scoreAEl.textContent = state.live.scoreA;
+    scoreBEl.textContent = state.live.scoreB;
+  }
+
+  document.querySelectorAll('.score-btns button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const team = btn.dataset.team;
+      const delta = parseInt(btn.dataset.delta,10);
+      if(team === 'A') state.live.scoreA = Math.max(0, state.live.scoreA + delta);
+      else state.live.scoreB = Math.max(0, state.live.scoreB + delta);
+      renderScores(); saveState();
+    });
+  });
+
+  // ---------- CLOCK ----------
+  const clockDisplay = document.getElementById('clockDisplay');
+  const startPauseBtn = document.getElementById('startPauseBtn');
+  const resetClockBtn = document.getElementById('resetClockBtn');
+  const halfBtn = document.getElementById('halfBtn');
+  const halfBadge = document.getElementById('halfBadge');
+  const durationMinInput = document.getElementById('durationMin');
+  const applyDurationBtn = document.getElementById('applyDuration');
+
+  let intervalHandle = null;
+
+  function formatTime(sec){
+    const m = Math.floor(sec/60).toString().padStart(2,'0');
+    const s = Math.floor(sec%60).toString().padStart(2,'0');
+    return m+':'+s;
+  }
+
+  function renderClock(){
+    clockDisplay.textContent = formatTime(state.live.remainingSec);
+    clockDisplay.classList.toggle('warn', state.live.remainingSec <= 30 && state.live.remainingSec > 0);
+    halfBadge.textContent = 'Half ' + state.live.half;
+    startPauseBtn.textContent = state.live.running ? 'Pause' : 'Start';
+  }
+
+  function tick(){
+    if(state.live.remainingSec > 0){
+      state.live.remainingSec -= 1;
+      renderClock(); saveState();
+    } else {
+      stopClock();
+    }
+  }
+
+  function startClock(){
+    if(state.live.remainingSec <= 0) return;
+    state.live.running = true;
+    intervalHandle = setInterval(tick, 1000);
+    renderClock(); saveState();
+  }
+  function stopClock(){
+    state.live.running = false;
+    clearInterval(intervalHandle);
+    renderClock(); saveState();
+  }
+
+  startPauseBtn.addEventListener('click', ()=>{
+    if(state.live.running) stopClock(); else startClock();
+  });
+  resetClockBtn.addEventListener('click', ()=>{
+    stopClock();
+    state.live.remainingSec = state.live.durationSec;
+    renderClock(); saveState();
+  });
+  halfBtn.addEventListener('click', ()=>{
+    stopClock();
+    state.live.half = state.live.half === 1 ? 2 : 1;
+    state.live.remainingSec = state.live.durationSec;
+    renderClock(); saveState();
+  });
+  applyDurationBtn.addEventListener('click', ()=>{
+    const mins = Math.max(1, Math.min(30, parseInt(durationMinInput.value,10) || 3));
+    state.live.durationSec = mins*60;
+    state.live.remainingSec = mins*60;
+    stopClock();
+    renderClock(); saveState();
+  });
+
+  // ---------- SAVE MATCH TO STANDINGS ----------
+  saveMatchBtn.addEventListener('click', ()=>{
+    const teamA = state.teams.find(t=>t.id===state.live.teamAId);
+    const teamB = state.teams.find(t=>t.id===state.live.teamBId);
+    if(!teamA || !teamB) return;
+
+    teamA.played++; teamB.played++;
+    teamA.gf += state.live.scoreA; teamA.ga += state.live.scoreB;
+    teamB.gf += state.live.scoreB; teamB.ga += state.live.scoreA;
+
+    if(state.live.scoreA > state.live.scoreB){ teamA.won++; teamB.lost++; }
+    else if(state.live.scoreB > state.live.scoreA){ teamB.won++; teamA.lost++; }
+    else { teamA.drawn++; teamB.drawn++; }
+
+    // reset live match for next game
+    state.live.scoreA = 0; state.live.scoreB = 0;
+    state.live.half = 1;
+    stopClock();
+    state.live.remainingSec = state.live.durationSec;
+
+    saveState();
+    renderScores(); renderClock(); renderStandings();
+
+    tabBtns.forEach(b=>b.classList.remove('active'));
+    document.querySelector('[data-view="standings"]').classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-standings').classList.add('active');
+  });
+
+  // ---------- TEAMS / STANDINGS ----------
+  const newTeamName = document.getElementById('newTeamName');
+  const addTeamBtn = document.getElementById('addTeamBtn');
+  const standingsBody = document.getElementById('standingsBody');
+  const teamCountEl = document.getElementById('teamCount');
+  const emptyState = document.getElementById('emptyState');
+
+  function addTeam(name){
+    const trimmed = name.trim();
+    if(!trimmed) return;
+    if(state.teams.length >= 12){ alert('Max 12 teams lang muna, pre.'); return; }
+    state.teams.push({ id: uid(), name: trimmed, played:0, won:0, drawn:0, lost:0, gf:0, ga:0 });
+    saveState(); populateSelects(); renderStandings();
+  }
+
+  addTeamBtn.addEventListener('click', ()=>{
+    addTeam(newTeamName.value);
+    newTeamName.value = '';
+    newTeamName.focus();
+  });
+  newTeamName.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ addTeam(newTeamName.value); newTeamName.value=''; }
+  });
+
+  function removeTeam(id){
+    if(!confirm('Alisin ang team na ito sa standings? Hindi na maibabalik ito.')) return;
+    state.teams = state.teams.filter(t=>t.id!==id);
+    if(state.live.teamAId === id) state.live.teamAId = null;
+    if(state.live.teamBId === id) state.live.teamBId = null;
+    saveState(); populateSelects(); renderStandings(); validateSaveBtn();
+  }
+
+  function renderStandings(){
+    const sorted = [...state.teams].sort((a,b)=>{
+      const ptsA = a.won*3 + a.drawn, ptsB = b.won*3 + b.drawn;
+      if(ptsB !== ptsA) return ptsB - ptsA;
+      const gdA = a.gf-a.ga, gdB = b.gf-b.ga;
+      if(gdB !== gdA) return gdB - gdA;
+      return b.gf - a.gf;
+    });
+
+    teamCountEl.textContent = state.teams.length + ' team(s) registered';
+    emptyState.style.display = sorted.length ? 'none' : 'block';
+
+    standingsBody.innerHTML = sorted.map((t, i)=>{
+      const pts = t.won*3 + t.drawn;
+      const gd = t.gf - t.ga;
+      return `<tr>
+        <td class="rank">${i+1}</td>
+        <td class="team-cell">${escapeHtml(t.name)}</td>
+        <td>${t.played}</td>
+        <td>${t.won}</td>
+        <td>${t.drawn}</td>
+        <td>${t.lost}</td>
+        <td>${t.gf}</td>
+        <td>${t.ga}</td>
+        <td>${gd > 0 ? '+' + gd : gd}</td>
+        <td class="pts">${pts}</td>
+        <td><button class="remove-btn" data-remove="${t.id}" title="Remove team">✕</button></td>
+      </tr>`;
+    }).join('');
+
+    standingsBody.querySelectorAll('[data-remove]').forEach(btn=>{
+      btn.addEventListener('click', ()=> removeTeam(btn.dataset.remove));
+    });
+  }
+
+  // ---------- INIT ----------
+  nameA.value = state.live.nameA;
+  nameB.value = state.live.nameB;
+  durationMinInput.value = Math.round(state.live.durationSec/60);
+  populateSelects();
+  renderScores();
+  renderClock();
+  renderStandings();
+  validateSaveBtn();
+  if(state.live.running) startClock();
+
+})();
+</script>
+</body>
+</html>
